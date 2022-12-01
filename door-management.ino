@@ -29,7 +29,7 @@ void turnOffApproveLight();
 void makeApproveSound();
 void makeRejectSound();
 void turnOffBuzzer();
-String getCardUuid();
+void array_to_string(byte array[], unsigned int len, char buffer[]);
 
 
 void setup() {
@@ -47,14 +47,19 @@ void setup() {
   delay(2000); // wait for servo to reposition
 }
 
+
+
 void loop() {
 
   // not doing anything until card is detected
   if (!mfrc522.PICC_IsNewCardPresent()) return;
+  if ( ! mfrc522.PICC_ReadCardSerial()) return;
 
-  String rfidCardUID = getCardUuid();
+  char str[32] = "";
+  array_to_string(mfrc522.uid.uidByte, 4, str);
+
   
-  Serial.println(rfidCardUID + " " + THIS_GATE_CODE);
+  Serial.println(String(str) + " " + THIS_GATE_CODE);
   delay(500); // wait for response
 
   // read response
@@ -138,7 +143,14 @@ void rejectPersonPass() {
   turnOffRejectLight();
 }
 
-String getCardUuid() {
-  // todo: make reading uuid from card
-  return "333";
+
+void array_to_string(byte arr[], unsigned int len, char buffer[]) {
+   for (unsigned int i = 0; i < len; i++) {
+      byte nib1 = (arr[i] >> 4) & 0x0F;
+      byte nib2 = (arr[i] >> 0) & 0x0F;
+      buffer[i*2+0] = nib1  < 0xA ? '0' + nib1  : 'A' + nib1  - 0xA;
+      buffer[i*2+1] = nib2  < 0xA ? '0' + nib2  : 'A' + nib2  - 0xA;
+   }
+   buffer[len*2] = '\0';
 }
+
